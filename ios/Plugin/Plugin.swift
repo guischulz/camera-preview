@@ -104,7 +104,8 @@ public class CameraPreview: CAPPlugin {
                         if (self.toBack!) {
                             self.webView?.superview?.bringSubviewToFront(self.webView!)
                         }
-                        try? self.cameraController.displayPreview(on: self.previewView)
+                        let frontView = self.toBack! ? self.webView : self.previewView;
+                        try? self.cameraController.displayPreview(on: self.previewView, top: frontView ?? self.previewView)
                         
                         if (self.rotateWhenOrientationChanged == true) {
                             NotificationCenter.default.addObserver(self, selector: #selector(CameraPreview.rotated), name: UIDevice.orientationDidChangeNotification, object: nil)

@@ -152,12 +152,16 @@ extension CameraController {
         }
     }
 
-    func displayPreview(on view: UIView) throws {
+    func displayPreview(on view: UIView, top gestureView: UIView) throws {
         guard let captureSession = self.captureSession, captureSession.isRunning else { throw CameraControllerError.captureSessionIsMissing }
 
         self.previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
         self.previewLayer?.videoGravity = AVLayerVideoGravity.resizeAspectFill
 
+        let tap = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
+        tap.delegate = self
+        gestureView.addGestureRecognizer(tap)
+        
         view.layer.insertSublayer(self.previewLayer!, at: 0)
         self.previewLayer?.frame = view.frame
     }
@@ -413,6 +417,38 @@ extension CameraController {
             return
         }
         //self.videoOutput?.stopRecording()
+    }
+}
+
+extension CameraController: UIGestureRecognizerDelegate {
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        return true;
+    }
+    
+    @objc
+    func handleTap(_ tap: UITapGestureRecognizer) {
+        guard let device = self.currentCameraPosition == .rear ? rearCamera : frontCamera else { return }
+
+        let point = tap.location(in: tap.view)
+        let devicePoint = self.previewLayer?.captureDevicePointConverted(fromLayerPoint: point)
+
+        do {
+            try device.lockForConfiguration()
+            defer { device.unlockForConfiguration() }
+            let focusMode = AVCaptureDevice.FocusMode.autoFocus
+            if device.isFocusPointOfInterestSupported && device.isFocusModeSupported(focusMode) {
+                device.focusPointOfInterest = CGPoint(x: CGFloat(devicePoint?.x ?? 0), y: CGFloat(devicePoint?.y ?? 0))
+                device.focusMode = focusMode
+            }
+
+            let exposureMode = AVCaptureDevice.ExposureMode.autoExpose
+            if device.isExposurePointOfInterestSupported && device.isExposureModeSupported(exposureMode) {
+                device.exposurePointOfInterest = CGPoint(x: CGFloat(devicePoint?.x ?? 0), y: CGFloat(devicePoint?.y ?? 0))
+                device.exposureMode = exposureMode
+            }
+        } catch {
+            debugPrint(error)
+        }
     }
 }
 
