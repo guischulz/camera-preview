@@ -156,14 +156,14 @@ extension CameraController {
 
     func displayPreview(on view: UIView) throws {
         guard let captureSession = self.captureSession, captureSession.isRunning else { throw CameraControllerError.captureSessionIsMissing }
-        
+
         self.previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
         self.previewLayer?.videoGravity = AVLayerVideoGravity.resizeAspectFill
-        
+
         view.layer.insertSublayer(self.previewLayer!, at: 0)
         self.previewLayer?.frame = view.frame
     }
-    
+
     func setupGestures(target: UIView, enableZoom: Bool) {
         setupTapGesture(target: target, selector: #selector(handleTap(_:)), delegate: self)
         if (enableZoom) {
